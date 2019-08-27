@@ -47,8 +47,6 @@ paths:
           $ref: '#/components/responses/401Unauthorized'
         default:
           $ref: '#/components/responses/500InternalError'
-      security:
-      - home_auth: []
 
 components:
   requestBodies:
@@ -144,8 +142,3 @@ components:
           type: string
         admin:
           type: boolean
-  securitySchemes:
-    home_auth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
