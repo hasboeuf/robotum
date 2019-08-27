@@ -1,0 +1,103 @@
+openapi: 3.0.1
+info:
+  title: Auth API
+  description: Auth API
+  version: 1.0.0
+servers:
+- url: http://127.0.0.1
+paths:
+  /v1/login:
+    post:
+      summary: Login user
+      operationId: auth.api.login
+      requestBody:
+        $ref: '#/components/requestBodies/Login'
+      responses:
+        200:
+          $ref: '#/components/responses/Login'
+        400:
+          $ref: '#/components/responses/400BadRequest'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        default:
+          $ref: '#/components/responses/500InternalError'
+  /v1/logout:
+    delete:
+      summary: Logout current logged in user session
+      operationId: auth.api.logout
+      responses:
+        200:
+          $ref: '#/components/responses/Default'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        default:
+          $ref: '#/components/responses/500InternalError'
+      security:
+      - home_auth: []
+
+components:
+  requestBodies:
+    Login:
+      description: Login request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginRequestContent'
+  responses:
+    Default:
+      description: Generic
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DefaultResponseContent'
+    401Unauthorized:
+      description: Access token is missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DefaultResponseContent'
+    400BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DefaultResponseContent'
+    500InternalError:
+      description: Unexpected error
+    Login:
+      description: Login successful
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginResponseContent'
+    Logout:
+      description: Logout successful
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DefaultResponseContent'
+  schemas:
+    DefaultResponseContent:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+    LoginRequestContent:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    LoginResponseContent:
+      type: object
+      properties:
+        token:
+          type: string
+  securitySchemes:
+    home_auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
