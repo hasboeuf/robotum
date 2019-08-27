@@ -198,6 +198,8 @@ components:
       properties:
         token:
           type: string
+        admin:
+          type: boolean
     BatteryResponseContent:
       type: object
       properties:

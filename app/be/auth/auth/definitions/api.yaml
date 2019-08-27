@@ -36,6 +36,17 @@ paths:
           $ref: '#/components/responses/401Unauthorized'
         default:
           $ref: '#/components/responses/500InternalError'
+  /v1/check:
+    post:
+      summary: Check token
+      operationId: auth.api.check
+      requestBody:
+        $ref: '#/components/requestBodies/CheckToken'
+      responses:
+        200:
+          $ref: '#/components/responses/Token'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
   /v1/logout:
     delete:
       summary: Logout current logged in user session
@@ -62,6 +73,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateUserContent'
+    CheckToken:
+      description: Check token request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CheckTokenResponseContent'
   responses:
     Default:
       description: Generic
@@ -95,12 +112,24 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DefaultResponseContent'
+    Login:
+      description: Login successful
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginResponseContent'
     UserList:
       description: User list
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/UserListResponseContent'
+    Token:
+      description: Token valid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CheckTokenResponseContent'
   schemas:
     DefaultResponseContent:
       type: object
@@ -121,6 +150,8 @@ components:
       properties:
         token:
           type: string
+        admin:
+          type: boolean
     UserListResponseContent:
       type: object
       properties:
@@ -142,3 +173,8 @@ components:
           type: string
         admin:
           type: boolean
+    CheckTokenResponseContent:
+      type: object
+      properties:
+        token:
+          type: object
