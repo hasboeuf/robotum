@@ -1,2 +1,5 @@
 .vscode
 *.pyc
+node_modules
+app/yarn.lock
+app/package.json

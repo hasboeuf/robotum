@@ -4,6 +4,7 @@ Home robot
 
 [Gateway](app/be/gateway/README.md)
 [Auth](app/be/auth/README.md)
+[Frontend](app/fe/README.md)
 [Robot controller](robot/robotcontroller/README.md)
 [Robot board](robot/robotboard/README.md)
 
