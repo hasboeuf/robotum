@@ -16,6 +16,7 @@ const char* PASSWORD = "PASSWORD";
 
 std::vector<int> PINS = {16, 5, 4, 0, 2, 14, 12, 13, 15};
 std::vector<int> CACHE_VALUES = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+const int BUZZER_GPIO = 8;
 
 const std::string ENDPOINT_ROOT = "^/$";
 const std::string ENDPOINT_STATUS = "^/status$";
@@ -189,6 +190,30 @@ int readPinValue(int pin) {
   return digitalRead(PINS[pin]);
 }
 
+void buzzKo() {
+  int buzz = PINS[BUZZER_GPIO];
+  tone(buzz, 370, 50);
+  delay(100);
+  tone(buzz, 370, 300);
+}
+
+void buzzOk() {
+  tone(PINS[BUZZER_GPIO], 2093, 100);
+}
+
+void buzzOkWifi() {
+  int buzz = PINS[BUZZER_GPIO];
+  tone(buzz, 523, 50);
+  delay(50);
+  tone(buzz, 783, 50);
+  delay(50);
+  tone(buzz, 1046, 50);
+  delay(50);
+  tone(buzz, 1568, 50);
+  delay(50);
+  tone(buzz, 2093, 70);
+}
+
 Router router;
 ESP8266WebServer server(80);
 
@@ -196,6 +221,11 @@ void sendJson(int httpCode, const JsonDocument& doc) {
   std::string response;
   serializeJsonPretty(doc, response);
   server.send(httpCode, "text/json", response.c_str());
+  if (httpCode == 200) {
+    buzzOk();
+  } else {
+    buzzKo();
+  }
 }
 
 void sendNotAllowed(std::string message) {
@@ -330,6 +360,9 @@ void handleRestart(std::vector<std::string>) {
 void setup(void) {
   Serial.begin(9600);
 
+  pinMode(PINS[BUZZER_GPIO], OUTPUT);
+  digitalWrite(PINS[BUZZER_GPIO], 0);
+
   WiFi.mode(WIFI_STA);
   WiFi.begin(SSID, PASSWORD);
   Serial.println("");
@@ -338,6 +371,8 @@ void setup(void) {
     delay(500);
     Serial.print(".");
   }
+
+  buzzOkWifi();
 
   Serial.println("");
   Serial.print("Connected to ");
