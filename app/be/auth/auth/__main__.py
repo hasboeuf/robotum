@@ -4,6 +4,15 @@
 
 import connexion
 from connexion.resolver import RestyResolver
+from flask import appcontext_tearing_down
+
+from auth.database import db_session, init_db
+
+
+def shutdown_session(exception=None):
+    """ todoc
+    """
+    db_session.remove()
 
 
 def main():
@@ -19,6 +28,8 @@ def main():
         strict_validation=True,
         validate_responses=True,
     )
+    init_db()
+    appcontext_tearing_down.connect(shutdown_session, app)
     app.run(port=8081)
 
 

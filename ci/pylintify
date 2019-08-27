@@ -3,3 +3,4 @@ set -ev
 cd $(dirname $0)/..
 
 pylint --output-format=parseable --max-line-length=120 app/be/gateway/gateway
+pylint --output-format=parseable --max-line-length=120 app/be/auth/auth

@@ -6,6 +6,21 @@ info:
 servers:
 - url: http://127.0.0.1
 paths:
+  /v1/users:
+    get:
+      summary: Get users
+      operationId: auth.api.get_users
+      responses:
+        200:
+          $ref: '#/components/responses/UserList'
+    post:
+      summary: Create user
+      operationId: auth.api.create_user
+      requestBody:
+        $ref: '#/components/requestBodies/CreateUser'
+      responses:
+        200:
+          $ref: '#/components/responses/Default'
   /v1/login:
     post:
       summary: Login user
@@ -43,6 +58,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/LoginRequestContent'
+    CreateUser:
+      description: Create user request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateUserContent'
   responses:
     Default:
       description: Generic
@@ -76,6 +97,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DefaultResponseContent'
+    UserList:
+      description: User list
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserListResponseContent'
   schemas:
     DefaultResponseContent:
       type: object
@@ -96,6 +123,27 @@ components:
       properties:
         token:
           type: string
+    UserListResponseContent:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            type: object
+            properties:
+              username:
+                type: string
+              admin:
+                type: boolean
+    CreateUserContent:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        admin:
+          type: boolean
   securitySchemes:
     home_auth:
       type: http
