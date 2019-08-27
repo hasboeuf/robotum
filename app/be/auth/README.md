@@ -18,3 +18,9 @@ and open your browser to here:
 ```bash
 http://localhost:8081/v2/ui/
 ```
+
+## Unittests
+
+```bash
+pytest --verbose auth/tests/
+```

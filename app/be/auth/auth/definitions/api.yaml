@@ -78,7 +78,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CheckTokenResponseContent'
+            $ref: '#/components/schemas/CheckTokenRequestContent'
   responses:
     Default:
       description: Generic
@@ -173,6 +173,11 @@ components:
           type: string
         admin:
           type: boolean
+    CheckTokenRequestContent:
+      type: object
+      properties:
+        token:
+          type: string
     CheckTokenResponseContent:
       type: object
       properties:
