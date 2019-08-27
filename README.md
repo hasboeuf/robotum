@@ -3,6 +3,7 @@
 Home robot
 
 [Gateway](app/be/gateway/README.md)
+[Robot board](robot/robotboard/README.md)
 
 ## Code sanity
 
