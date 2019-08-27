@@ -26,3 +26,12 @@ Echo WebRTC DataChannel for now.
 ```bash
 python3 robotboard.py
 ```
+
+## Dumb inputs test
+
+This is using `keyboard` package which requires root access.
+
+```bash
+pip3 install -r requirements.txt
+sudo ~/.virtualenvs/robotum/bin/python3 robotboard/input.py
+```
