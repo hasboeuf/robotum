@@ -38,7 +38,9 @@ def decode_token(token):
     }
 
     try:
-        return jwt.decode(token, JWT_SECRET, algorithms=["HS256"], issuer=JWT_ISSUER, options=options)
+        return jwt.decode(
+            token, JWT_SECRET, algorithms=["HS256"], issuer=JWT_ISSUER, options=options
+        )
     except JWTError as e:
         print("Invalid token")
         return None

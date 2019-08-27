@@ -1,6 +1,5 @@
 """ API endpoints
 """
-from auth.database import db_session
 from auth.models import User
 from auth.security import generate_token, decode_token
 
@@ -46,8 +45,10 @@ def create_user(body):
         return _get_bad_request()
 
     user = User(username, password, admin)
-    db_session.add(user)
-    db_session.commit()
+    try:
+        user.add()
+    except:
+        return {"code": "BAD_REQUEST", "message": "Integrity error"}, 401
     return {"code": "OK", "message": "{} created".format(username)}, 200
 
 
