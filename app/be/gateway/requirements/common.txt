@@ -1,0 +1,3 @@
+connexion == 2.2.0
+python_dateutil == 2.6.0
+swagger-ui-bundle==0.0.3

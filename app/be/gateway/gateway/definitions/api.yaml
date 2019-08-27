@@ -1,0 +1,232 @@
+openapi: 3.0.1
+info:
+  title: Home API
+  description: Home API
+  version: 1.0.0
+servers:
+- url: http://127.0.0.1
+tags:
+- name: robotum
+  description: Everything about robotum
+- name: auth
+  description: Everything about authentication
+paths:
+  /v1/robotum/on:
+    put:
+      tags:
+      - robotum
+      summary: Turn on the robot
+      operationId: gateway.views.robotum.turn_on
+      responses:
+        200:
+          $ref: '#/components/responses/Default'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        default:
+          $ref: '#/components/responses/500InternalError'
+      security:
+      - home_auth: []
+  /v1/robotum/off:
+    put:
+      tags:
+      - robotum
+      summary: Turn off the robot
+      operationId: gateway.views.robotum.turn_off
+      responses:
+        200:
+          $ref: '#/components/responses/Default'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        default:
+          $ref: '#/components/responses/500InternalError'
+      security:
+      - home_auth: []
+  /v1/robotum/status:
+    get:
+      tags:
+      - robotum
+      summary: Status of the robot
+      operationId: gateway.views.robotum.get_status
+      responses:
+        200:
+          $ref: '#/components/responses/Status'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        default:
+          $ref: '#/components/responses/500InternalError'
+      security:
+      - home_auth: []
+  /v1/robotum/battery:
+    get:
+      tags:
+      - robotum
+      summary: Battery of the robot
+      operationId: gateway.views.robotum.get_battery
+      responses:
+        200:
+          $ref: '#/components/responses/Battery'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        default:
+          $ref: '#/components/responses/500InternalError'
+      security:
+      - home_auth: []
+  /v1/robotum/signal:
+    get:
+      tags:
+      - robotum
+      summary: Battery of the robot
+      operationId: gateway.views.robotum.get_signal
+      responses:
+        200:
+          $ref: '#/components/responses/Signal'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        default:
+          $ref: '#/components/responses/500InternalError'
+      security:
+      - home_auth: []
+  /v1/auth/login:
+    post:
+      tags:
+      - auth
+      summary: Login user
+      operationId: gateway.views.auth.login
+      requestBody:
+        $ref: '#/components/requestBodies/Login'
+      responses:
+        200:
+          $ref: '#/components/responses/Login'
+        400:
+          $ref: '#/components/responses/400BadRequest'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        default:
+          $ref: '#/components/responses/500InternalError'
+  /v1/auth/logout:
+    delete:
+      tags:
+      - auth
+      summary: Logout current logged in user session
+      operationId: gateway.views.auth.logout
+      responses:
+        200:
+          $ref: '#/components/responses/Default'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        default:
+          $ref: '#/components/responses/500InternalError'
+      security:
+      - home_auth: []
+
+components:
+  requestBodies:
+    Login:
+      description: Login request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginRequestContent'
+  responses:
+    Default:
+      description: Generic
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DefaultResponseContent'
+    401Unauthorized:
+      description: Access token is missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DefaultResponseContent'
+    400BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DefaultResponseContent'
+    500InternalError:
+      description: Unexpected error
+    Login:
+      description: Login successful
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginResponseContent'
+    Logout:
+      description: Logout successful
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DefaultResponseContent'
+    Battery:
+      description: Battery response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BatteryResponseContent'
+    Signal:
+      description: Signal response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SignalResponseContent'
+    Status:
+      description: Status response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StatusResponseContent'
+  schemas:
+    DefaultResponseContent:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+    LoginRequestContent:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    LoginResponseContent:
+      type: object
+      properties:
+        token:
+          type: string
+    BatteryResponseContent:
+      type: object
+      properties:
+        value:
+          type: integer
+    SignalResponseContent:
+      type: object
+      properties:
+        value:
+          type: integer
+    StatusResponseContent:
+      type: object
+      properties:
+        controller:
+          properties:
+            host:
+              type: string
+            status:
+              type: string
+        board:
+          type: object
+          properties:
+            host:
+              type: string
+            status:
+              type: string
+  securitySchemes:
+    home_auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
