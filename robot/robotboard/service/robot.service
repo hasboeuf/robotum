@@ -1,0 +1,10 @@
+[Unit]
+Description=Service related to the robot logic.
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/bin/robot_on_start
+
+[Install]
+WantedBy=multi-user.target
