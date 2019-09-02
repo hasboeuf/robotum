@@ -1,14 +1,57 @@
 #!/usr/bin/env python3
-import RPi.GPIO as GPIO
+import os
+import socket
+import signal
+import sys
+import threading
+import time
 
-ALIVE_PIN = 5
+from logger import setup_logger, LOGGER
 
+BIND_IP = '0.0.0.0'
+BIND_PORT = 51000
 
-"""
-Once started PIN10 becomes HIGH,
-so RPI state can be check by robot controller.
-"""
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(ALIVE_PIN, GPIO.OUT)
-GPIO.output(ALIVE_PIN, GPIO.HIGH)
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind((BIND_IP, BIND_PORT))
+server.listen(5)  # max backlog of connections
+
+print("Listening on {}:{}".format(BIND_IP, BIND_PORT))
+
+def handle_client_thread(client_socket, stop_func):
+    while not stop_func():
+        handle_client(client_socket)
+        time.sleep(0.10)
+    client_socket.close()
+
+def handle_client(client_socket):
+    request = client_socket.recv(1024)
+    if not request:
+        return
+    request = request.strip()
+
+    if request == b"ping":
+        client_socket.send(b"pong\n")
+    elif request == b"shutdown":
+        LOGGER.info("Shuting down...")
+        os.system("sudo poweroff")
+    else:
+        LOGGER.info("Received unknown message: {}".format(request))
+
+setup_logger()
+threads = []
+stop_threads = False
+
+while True:
+    try:
+        client_sock, address = server.accept()
+        LOGGER.info("Accepted connection from {}:{}".format(address[0], address[1]))
+        client_handler = threading.Thread(target=handle_client_thread, args=(client_sock, lambda: stop_threads))
+        client_handler.start()
+        signal.pause()
+    except KeyboardInterrupt:
+        stop_threads = True
+        for thr in threads:
+            thr.join()
+        LOGGER.info("Bye")
+        sys.exit(0)
 

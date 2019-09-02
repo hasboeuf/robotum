@@ -13,17 +13,18 @@
 
 const char* SSID = "SSID";
 const char* PASSWORD = "PASSWORD";
-
+const char* ROBOT_BOARD_IP = "a.b.c.d";
+const int ROBOT_BOARD_PORT = 1024;
+const int ROBOT_POWER_DELAY = 20000;
 std::vector<int> PINS = {16, 5, 4, 0, 2, 14, 12, 13, 15};
-std::vector<int> CACHE_VALUES = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
-const int BUZZER_GPIO = 8;
+const int ROBOT_POWER_GPIO = 1;
+const int BUZZER_GPIO = 2;
 
 const std::string ENDPOINT_ROOT = "^/$";
 const std::string ENDPOINT_STATUS = "^/status$";
-const std::string ENDPOINT_GPIO_LIST = "^/gpio$";
-const std::string ENDPOINT_GPIO_LIST_ONE = "^/gpio/(%d+)$";
-const std::string ENDPOINT_GPIO_SET_VALUE = "^/gpio/(%d+)/value/(%a+)$";
-const std::string ENDPOINT_GPIO_SET_MODE = "^/gpio/(%d+)/mode/(%a+)$";
+const std::string ENDPOINT_ROBOT_START = "^/robot/start$";
+const std::string ENDPOINT_ROBOT_STOP = "^/robot/stop$";
+const std::string ENDPOINT_ROBOT_FORCE_STOP = "^/robot/stop/force$";
 const std::string ENDPOINT_RESTART = "^/restart$";
 
 
@@ -165,31 +166,6 @@ class Router {
     std::list<std::string> mEndpoints;
 };
 
-std::string pinMode(unsigned int pin)
-{
-  if (pin >= PINS.size()) {
-    return "";
-  }
-
-  uint32_t bit = digitalPinToBitMask(PINS[pin]);
-  uint32_t port = digitalPinToPort(PINS[pin]);
-  volatile uint32_t* reg = portModeRegister(port);
-  if (*reg & bit) {
-    return "OUTPUT";
-  }
-
-  volatile uint32_t* out = portOutputRegister(port);
-  return ((*out & bit) ? "INPUT_PULLUP" : "INPUT");
-}
-
-int readPinValue(int pin) {
-  std::string mode = pinMode(pin);
-  if (mode == "" || mode == "OUTPUT") {
-    return -1;
-  }
-  return digitalRead(PINS[pin]);
-}
-
 void buzzKo() {
   int buzz = PINS[BUZZER_GPIO];
   tone(buzz, 370, 50);
@@ -216,6 +192,11 @@ void buzzOkWifi() {
 
 Router router;
 ESP8266WebServer server(80);
+WiFiClient robotSocket;
+bool robotPowered = false;
+String robotStatus = "DISCONNECTED"; // CONNECTING CONNECTED DISCONNECTING
+long lastTimestamp = 0;
+long lastConnectedTimestamp = 0;
 
 void sendJson(int httpCode, const JsonDocument& doc) {
   std::string response;
@@ -260,91 +241,62 @@ void handleStatus(std::vector<std::string>) {
   doc["code"] = "OK";
   doc["message"] = "Up and running";
   doc["signal"] = WiFi.RSSI();
-  sendJson(200, doc);
-}
-
-void handleGpioList(std::vector<std::string>) {
-  StaticJsonDocument<1024> doc;
-  JsonArray gpios = doc.createNestedArray("gpios");
-  for (unsigned int i = 0; i < PINS.size(); ++i) {
-    JsonObject gpio = gpios.createNestedObject();
-    gpio["id"] = i;
-    gpio["internal_id"] = PINS[i];
-    gpio["mode"] = pinMode(i);
-    gpio["value"] = readPinValue(i);
-    gpio["cache_value"] = CACHE_VALUES[i];
+  JsonObject robot = doc.createNestedObject("robot");
+  robot["ip"] = ROBOT_BOARD_IP;
+  robot["powered"] = robotPowered;
+  String poweredFor = "N/A";
+  if (robotPowered && robotStatus == "DISCONNECTING") {
+    poweredFor = String(lastConnectedTimestamp + ROBOT_POWER_DELAY - millis()) + "ms";
   }
+  robot["powered_for"] = poweredFor;
+  robot["status"] = robotStatus;
   sendJson(200, doc);
 }
 
-void handleGpioListOne(std::vector<std::string> args) {
-  unsigned int id = atoi(args[1].c_str());
+void handleRobotStart(std::vector<std::string>) {
+  if (robotStatus != "DISCONNECTED") {
+    sendNotAllowed("Robot is not DISCONNECTED");
+    return;
+  }
+
   StaticJsonDocument<256> doc;
-  if (id >= PINS.size()) {
-    sendNotAllowed("Pin not found");
-    return;
-  }
-
-  doc["id"] = id;
-  doc["internal_id"] = PINS[id];
-  doc["mode"] = pinMode(id);
-  doc["value"] = readPinValue(id);
-  doc["cache_value"] = CACHE_VALUES[id];
-  sendJson(200, doc);
-}
-
-void handleGpioSetValue(std::vector<std::string> args) {
-  unsigned int id = atoi(args[1].c_str());
-  int value = args[2] == "low" ? 0 : args[2] == "high" ? 1 : -1;
-  StaticJsonDocument<256> doc;
-
-  if (id >= PINS.size()) {
-    sendNotAllowed("Pin not found");
-    return;
-  }
-
-  if (value == -1) {
-    sendNotAllowed("Wrong value, should be low|high");
-    return;
-  }
-
-  if (pinMode(id) != "OUTPUT") {
-    sendNotAllowed("Pin not in OUTPUT mode");
-    return;
-  }
-
-  CACHE_VALUES[id] = value;
-  digitalWrite(PINS[id], value);
-  std::string msg = "Set " + args[2] + " to GPIO " + args[1];
   doc["code"] = "OK";
-  doc["message"] = msg;
+  doc["message"] = "Starting...";
+
+  robotPowered = true;
+  robotStatus = "CONNECTING";
+
+  digitalWrite(PINS[ROBOT_POWER_GPIO], 1);
+
   sendJson(200, doc);
 }
 
-void handleGpioSetMode(std::vector<std::string> args) {
-  unsigned int id = atoi(args[1].c_str());
-  std::string mode = args[2];
+void handleRobotStop(std::vector<std::string>) {
+  if (robotStatus != "CONNECTED") {
+    sendNotAllowed("Robot is not CONNECTED");
+    return;
+  }
+
   StaticJsonDocument<256> doc;
-
-  if (id >= PINS.size()) {
-    sendNotAllowed("Pin not found");
-    return;
-  }
-
-  if (mode != "input" && mode != "output") {
-    sendNotAllowed("Unknown mode, should be input|output");
-    return;
-  }
-
-  if (mode == "input") {
-    pinMode(PINS[id], INPUT);
-  } else {
-    pinMode(PINS[id], OUTPUT);
-  }
-
-  std::string msg = "Set " + args[1] + " to mode " + mode;
   doc["code"] = "OK";
-  doc["message"] = msg;
+  doc["message"] = "Stopping...";
+
+  robotStatus = "DISCONNECTING";
+
+  sendJson(200, doc);
+}
+
+void handleRobotForceStop(std::vector<std::string>) {
+  Serial.println("Turn off power");
+  digitalWrite(PINS[ROBOT_POWER_GPIO], 0);
+
+  robotStatus = "DISCONNECTED";
+  robotPowered = false;
+
+  StaticJsonDocument<256> doc;
+  doc["code"] = "OK";
+  doc["message"] = "Stopped.";
+
   sendJson(200, doc);
 }
 
@@ -359,6 +311,9 @@ void handleRestart(std::vector<std::string>) {
 
 void setup(void) {
   Serial.begin(9600);
+
+  pinMode(PINS[ROBOT_POWER_GPIO], OUTPUT);
+  digitalWrite(PINS[ROBOT_POWER_GPIO], 0);
 
   pinMode(PINS[BUZZER_GPIO], OUTPUT);
   digitalWrite(PINS[BUZZER_GPIO], 0);
@@ -386,12 +341,12 @@ void setup(void) {
 
   router.setNotFoundCallback(handleNotFound);
   router.setNotPermittedCallback(handleNotAllowed);
+
   router.addRoute(HTTP_GET, ENDPOINT_ROOT, handleRoot);
   router.addRoute(HTTP_GET, ENDPOINT_STATUS, handleStatus);
-  router.addRoute(HTTP_GET, ENDPOINT_GPIO_LIST, handleGpioList);
-  router.addRoute(HTTP_GET, ENDPOINT_GPIO_LIST_ONE, handleGpioListOne);
-  router.addRoute(HTTP_PUT, ENDPOINT_GPIO_SET_VALUE, handleGpioSetValue);
-  router.addRoute(HTTP_PUT, ENDPOINT_GPIO_SET_MODE, handleGpioSetMode);
+  router.addRoute(HTTP_PUT, ENDPOINT_ROBOT_START, handleRobotStart);
+  router.addRoute(HTTP_PUT, ENDPOINT_ROBOT_STOP, handleRobotStop);
+  router.addRoute(HTTP_PUT, ENDPOINT_ROBOT_FORCE_STOP, handleRobotForceStop);
   router.addRoute(HTTP_PUT, ENDPOINT_RESTART, handleRestart);
 
   server.onNotFound([]() {
@@ -403,6 +358,66 @@ void setup(void) {
 }
 
 void loop(void) {
+  long currentTimestamp = millis();
+
   server.handleClient();
   MDNS.update();
+
+  if (currentTimestamp - lastTimestamp > 1000) {
+    // Check every second
+    lastTimestamp = currentTimestamp;
+
+    if (robotStatus == "CONNECTING") {
+      Serial.println("Try to connect the robot...");
+      if (!robotSocket.connect(ROBOT_BOARD_IP, ROBOT_BOARD_PORT)) {
+        Serial.println("Failed to connect the robot");
+      } else {
+        Serial.println("Robot connected!");
+        robotStatus = "CONNECTED";
+        lastConnectedTimestamp = millis();
+      }
+    }
+
+    if (robotStatus == "CONNECTED") {
+      robotSocket.print("ping\n");
+      robotSocket.flush();
+
+      long timeout = millis() + 2000;
+      bool received = false;
+      while (!received && millis() < timeout) {
+        received = robotSocket.available();
+        delay(200);
+      }
+
+      if (!received) {
+        Serial.println("Robot timeout! (did not receive PONG in time)");
+        robotSocket.stop();
+        robotStatus = "CONNECTING";
+        return;
+      }
+
+      String buffer = robotSocket.readStringUntil('\n');
+      if (buffer == "pong") {
+
+      } else {
+        Serial.print("Received unknown message: ");
+        Serial.println(buffer);
+      }
+
+      lastConnectedTimestamp = millis();
+    }
+
+    if (robotStatus == "DISCONNECTING" && robotSocket.connected()) {
+      Serial.println("Send shutdown order");
+      robotSocket.print("shutdown\n");
+      robotSocket.flush();
+    }
+
+    if (robotStatus == "DISCONNECTING" && currentTimestamp - lastConnectedTimestamp > ROBOT_POWER_DELAY) {
+      Serial.println("Turn off power");
+      digitalWrite(PINS[ROBOT_POWER_GPIO], 0);
+      robotPowered = false;
+      robotStatus = "DISCONNECTED";
+    }
+  }
 }
