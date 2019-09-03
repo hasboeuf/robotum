@@ -2,9 +2,9 @@
 Description=Service related to the robot logic.
 
 [Service]
-Type=oneshot
-RemainAfterExit=true
+Type=simple
+Restart=on-failure
 ExecStart=/usr/bin/robot_on_start
-
+KillSignal=SIGINT
 [Install]
 WantedBy=multi-user.target

@@ -38,12 +38,10 @@ sudo ~/.virtualenvs/robotum/bin/python3 robotboard/input.py
 
 ## Service
 
-```
+```bash
 sudo apt-get install python-dev python-rpi.gpio
-cd service
 sudo ln -s $(pwd)/robot_on_start /usr/bin/robot_on_start
-sudo cp robot.service /lib/systemd/system/
+sudo cp service/robot.service /lib/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable robot.service
 ```
-

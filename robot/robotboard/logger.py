@@ -26,4 +26,3 @@ def setup_logger():
     logger.addHandler(console_handler)
 
 LOGGER = logging.getLogger("robot")
-

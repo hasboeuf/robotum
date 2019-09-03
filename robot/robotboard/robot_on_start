@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""Daemon
+"""
+import sys
+import argparse
+import signal
+from time import sleep
+
+from logger import LOGGER, setup_logger
+from remote import RemoteController
+
+RET_OK = 0
+RET_KO = 1
+
+
+class RobotDaemon:
+    def __init__(self):
+        self.stop_flag = False
+        signal.signal(signal.SIGINT, self.stop)
+        signal.signal(signal.SIGTERM, self.stop)
+        self.remote_controller = RemoteController(self.is_stopped)
+        self.remote_controller.start()
+
+    def is_stopped(self):
+        return self.stop_flag
+
+    def stop(self, *args):
+        LOGGER.info("Stop ordered")
+        self.stop_flag = True
+        self.remote_controller.stop()
+        self.remote_controller.join()
+
+    def run(self):
+        try:
+            while not self.stop_flag:
+                pass
+            return RET_OK
+        except KeyboardInterrupt:
+            LOGGER.info("Ctrl+C detected")
+            self.stop()
+            return RET_OK
+        except Exception as exception:
+            LOGGER.info(str(exception))
+            return RET_KO
+
+def main():
+    setup_logger()
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    args = parser.parse_args()
+
+    daemon = RobotDaemon()
+    ret = daemon.run()
+    if ret == RET_KO:
+        LOGGER.warning("Bad exit")
+        return ret
+    LOGGER.info("Finished")
+    return ret
+
+
+if __name__ == "__main__":
+    sys.exit(main())
