@@ -40,6 +40,8 @@ sudo ~/.virtualenvs/robotum/bin/python3 robotboard/input.py
 
 ```bash
 sudo apt-get install python-dev python-rpi.gpio
+sudo mkdir -p /var/log/robot
+sudo chown $USER:$USER /var/log/robot
 sudo ln -s $(pwd)/robot_on_start /usr/bin/robot_on_start
 sudo cp service/robot.service /lib/systemd/system/
 sudo systemctl daemon-reload
