@@ -22,9 +22,7 @@ def init_db(app):
     import auth.models
 
     engine = create_engine(app.config["DATABASE_URI"])
-    DB_SESSION = scoped_session(
-        sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    )
+    DB_SESSION = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
     Base.query = DB_SESSION.query_property()
     Base.metadata.create_all(bind=engine)

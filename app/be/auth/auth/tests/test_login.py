@@ -5,9 +5,7 @@ from auth.tests.utils import check_default_response
 
 
 def test_login(client, create_user):
-    response = client.post(
-        "v1/login", json={"username": DEFAULT_USER, "password": DEFAULT_PASSWORD}
-    )
+    response = client.post("v1/login", json={"username": DEFAULT_USER, "password": DEFAULT_PASSWORD})
     assert response.status_code == 200
     assert "token" in response.json
     assert response.json["admin"]

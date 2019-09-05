@@ -7,7 +7,7 @@ import time
 
 from logger import LOGGER
 
-BIND_IP = '0.0.0.0'
+BIND_IP = "0.0.0.0"
 BIND_PORT = 51000
 
 
@@ -15,7 +15,7 @@ class RemoteController(threading.Thread):
     def __init__(self, stop_func):
         threading.Thread.__init__(self)
         self.stop_func = stop_func
-        self.socket_thread = None   
+        self.socket_thread = None
 
     def _handle_client_thread(self, client_socket):
         while not self.stop_func():
