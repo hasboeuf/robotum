@@ -8,6 +8,8 @@ from time import sleep
 
 from logger import LOGGER, setup_logger
 from remote import RemoteController
+from gamepad import GamePadController
+from motor import MotorController
 
 RET_OK = 0
 RET_KO = 1
@@ -19,7 +21,12 @@ class RobotDaemon:
         signal.signal(signal.SIGINT, self.stop)
         signal.signal(signal.SIGTERM, self.stop)
         self.remote_controller = RemoteController(self.is_stopped)
+        self.motor_controller = MotorController(self.is_stopped)
+        self.gamepad_controller = GamePadController(self.is_stopped, self.motor_controller)
         self.remote_controller.start()
+        self.motor_controller.start()
+        self.gamepad_controller.start()
+
 
     def is_stopped(self):
         return self.stop_flag
@@ -27,6 +34,8 @@ class RobotDaemon:
     def stop(self, *args):
         LOGGER.info("Stop ordered")
         self.stop_flag = True
+        self.gamepad_controller.join()
+        self.motor_controller.join()
         self.remote_controller.stop()
         self.remote_controller.join()
 
@@ -54,7 +63,7 @@ def main():
     if ret == RET_KO:
         LOGGER.warning("Bad exit")
         return ret
-    LOGGER.info("Finished")
+    LOGGER.info("Bye")
     return ret
 
 

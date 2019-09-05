@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os
 import socket
 import sys
@@ -16,6 +15,9 @@ class RemoteController(threading.Thread):
         threading.Thread.__init__(self)
         self.stop_func = stop_func
         self.socket_thread = None
+
+    def __del__(self):
+        LOGGER.info("RemoteController exited")
 
     def _handle_client_thread(self, client_socket):
         while not self.stop_func():
@@ -43,7 +45,7 @@ class RemoteController(threading.Thread):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((BIND_IP, BIND_PORT))
         self.server.listen(1)
-        LOGGER.info("Listening on {}:{}".format(BIND_IP, BIND_PORT))
+        LOGGER.info("RemoteController started (listening on {}:{})".format(BIND_IP, BIND_PORT))
 
         while not self.stop_func():
             try:

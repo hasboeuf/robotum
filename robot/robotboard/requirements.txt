@@ -1,1 +1,1 @@
-keyboard==0.13.3
+evdev==1.2.0
