@@ -20,6 +20,17 @@ class GamePadController(threading.Thread):
     def __del__(self):
         LOGGER.info("GamePadController exited")
 
+    def _update_motor_controller(self):
+        x = self.x
+        y = self.y
+
+        x = round(x * 100 / 255)
+        x -= 50
+        y = 255 - y
+        y = round(y * 100 / 255)
+        y -= 50
+        self.motor_controller.set_input(x, y)
+
     def run(self):
         LOGGER.info("GamePadController started")
         while not self.stop_func():
@@ -53,5 +64,5 @@ class GamePadController(threading.Thread):
                     self.y = event.value
                 else:
                     continue
-                self.motor_controller.set_input(self.x, self.y)
+                self._update_motor_controller()
                 print("{};{}       ".format(self.x, self.y), end="\r", flush=True)
