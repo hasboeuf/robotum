@@ -4,6 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
+import { userActions } from "../../actions/AuthActions"
 
 
 const styles = theme => ({
@@ -23,7 +24,7 @@ function Login(props) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    this.setState({ submitted: true });
+    // this.setState({ submitted: true });
     const { username, password } = this.state;
     const { dispatch } = this.props;
     if (username && password) {

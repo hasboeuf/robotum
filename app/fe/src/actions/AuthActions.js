@@ -1,4 +1,4 @@
-import { AuthService } from '../services';
+import { authService } from '../services/AuthService';
 
 export const userActions = {
     login,
@@ -9,11 +9,10 @@ function login(username, password) {
     return dispatch => {
         dispatch(request({ username }));
 
-        AuthService.login(username, password)
+        authService.login(username, password)
             .then(
-                user => { 
+                user => {
                     dispatch(success(user));
-                    history.push('/');
                 },
                 error => {
                     dispatch(failure(error.toString()));
@@ -27,6 +26,6 @@ function login(username, password) {
 }
 
 function logout() {
-    AuthService.logout();
-    return { type: userConstants.LOGOUT };
+    authService.logout();
+    return { type: "LOGOUT" };
 }
